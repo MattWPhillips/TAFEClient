@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{74140260-8630-4D4A-92B6-2751753713D9}</ProjectGuid>
+    <ProjectGuid>{D51F6387-D5E1-4B2A-A22E-0B7C577D87B6}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MailAFriend___Client</RootNamespace>
-    <AssemblyName>MailAFriend - Client</AssemblyName>
+    <RootNamespace>MailAFriend_Server</RootNamespace>
+    <AssemblyName>MailAFriend_Server</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -44,17 +44,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Client.cs" />
-    <Compile Include="FormClient.cs">
+    <Compile Include="FormServer.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="FormClient.Designer.cs">
-      <DependentUpon>FormClient.cs</DependentUpon>
+    <Compile Include="FormServer.Designer.cs">
+      <DependentUpon>FormServer.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="FormClient.resx">
-      <DependentUpon>FormClient.cs</DependentUpon>
+    <Compile Include="Server.cs" />
+    <EmbeddedResource Include="FormServer.resx">
+      <DependentUpon>FormServer.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -79,14 +79,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
