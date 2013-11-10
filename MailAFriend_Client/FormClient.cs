@@ -17,11 +17,6 @@ namespace MailAFriend_Client
             InitializeComponent();
         }
 
-        public void clientDislpay(string data)
-        {
-            tbDisplay.Text = data;
-        }
-
         private void btnConnect_Click(object sender, EventArgs e)
         {
             Client.startClient();
@@ -29,6 +24,7 @@ namespace MailAFriend_Client
 
         private void btnDisconnect_Click(object sender, EventArgs e)
         {
+            tbDisplay.Text = "Disconnected";
             Client.stopClient();
         }
 

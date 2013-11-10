@@ -15,26 +15,15 @@ namespace MailAFriend_Server
     {
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
-        public static bool serverOn { get; set; }
-        public static String display { get; set; }
-
-        //public static void serverDislpay(string data);
-
-        public Server()
-        {
-
-        }
+        public static string display { get; set; }
 
         public static void StartServer()
         {
             display = String.Empty;
-            serverOn = false;
             // Data buffer for incoming data.
             byte[] bytes = new Byte[1024];
 
             // Establish the local endpoint for the socket.
-            // The DNS name of the computer
-            // running the listener is "host.contoso.com".
             IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
             IPAddress ipAddress = ipHostInfo.AddressList[0];
             IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 3456);
@@ -46,6 +35,7 @@ namespace MailAFriend_Server
             // Bind the socket to the local endpoint and listen for incoming connections.
             try
             {
+                TextBox formDisplay = Application.OpenForms["FormServer"].Controls["tbServer"] as TextBox;
                 serverSocket.Bind(localEndPoint);
                 serverSocket.Listen(1000);
 
@@ -53,9 +43,7 @@ namespace MailAFriend_Server
                 {
                     // Set the event to nonsignaled state.
                     allDone.Reset();
-                    serverOn = true;
-                    display = "Server Started";
-                    serverDisplay();
+                    formDisplay.Text = "Server Started";
                           
                     // Start an asynchronous socket to listen for connections.
                     serverSocket.BeginAccept(
@@ -82,8 +70,7 @@ namespace MailAFriend_Server
             // Get the socket that handles the client request.
             Socket severSocket = (Socket)ar.AsyncState;
             Socket handler = severSocket.EndAccept(ar);
-            display = "Client has connected";
-            serverDisplay();
+   
             // Create the state object.
             ClientSocket client = new ClientSocket();
             client.socket = handler;
@@ -115,12 +102,19 @@ namespace MailAFriend_Server
                 data = client.sb.ToString();
                 if (data.IndexOf("<EOF>") > -1)
                 {
-                    // All the data has been read from the 
-                    // client. Display it on the console.
-                    display = "Read " + data.Length + " bytes from socket. \n Data : " + data;
-                    serverDisplay();
-                    // Echo the data back to the client.
-                    Send(handler, data);
+                    LoginCheck loginCheck = new LoginCheck(data);
+                    if (loginCheck.checkID())
+                    {
+                        Send(handler, "validUser<EOF>");
+                    }
+                    else
+                    {
+                        Send(handler, "Invalid user "+ data);
+                    }
+                }
+                else if (data.IndexOf("<ENDCONNECT>") > -1)
+                {
+                    client.socket.Shutdown(SocketShutdown.Both);
                 }
                 else
                 {
@@ -143,6 +137,7 @@ namespace MailAFriend_Server
 
         private static void SendCallback(IAsyncResult ar)
         {
+            TextBox formDisplay = Application.OpenForms["FormServer"].Controls["tbServer"] as TextBox;
             try
             {
                 // Retrieve the socket from the state object.
@@ -151,11 +146,10 @@ namespace MailAFriend_Server
                 // Complete sending the data to the remote device.
                 int bytesSent = handler.EndSend(ar);
                 display += "Sent " + bytesSent + " bytes to client.";
-                serverDisplay();
+                //formDisplay.Text = display;
 
-                serverOn = false;
                 handler.Shutdown(SocketShutdown.Both);
-                handler.Close();
+                //handler.Close();
 
             }
             catch (Exception ex)
@@ -163,13 +157,6 @@ namespace MailAFriend_Server
                 MessageBox.Show(ex.ToString());
             }
         }
-
-        public static string serverDisplay()
-        {
-            return display;
-        }
-
-
     }
     // State object for reading client data asynchronously
     public class ClientSocket
@@ -182,5 +169,13 @@ namespace MailAFriend_Server
         public byte[] buffer = new byte[bufferSizeConst];
         // Received data string.
         public StringBuilder sb = new StringBuilder();
+        // Communicator with form display.
+        public TextBox formDisplay = Application.OpenForms["FormServer"].Controls["tbServer"] as TextBox;
+
+        public void serverDisplay(string data)
+        {
+            formDisplay.Text += data;
+        }
+
     }
 }

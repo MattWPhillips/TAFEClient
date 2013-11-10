@@ -13,14 +13,15 @@ namespace MailAFriend_Client
 {
     class Client
     {
-                // The port number for the remote device.
-        private const int port = 3456;
+        // The port number for the remote device.
+        public const int port = 3456;
         // Establish the remote endpoint for the socket.
         // The name of the 
         // remote device is "host.contoso.com".
         public static IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
         public static IPAddress ipAddress = ipHostInfo.AddressList[0];
         public static IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
+
 
         // Create a TCP/IP socket.
         public static Socket client = new Socket(ipAddress.AddressFamily,
@@ -40,7 +41,7 @@ namespace MailAFriend_Client
 
         public static void startClient()
         {
-            FormClient fmc = new FormClient();
+            TextBox formDisplay = Application.OpenForms["FormClient"].Controls["tbDisplay"] as TextBox;
             // Connect to a remote device.
             try
             {
@@ -51,7 +52,7 @@ namespace MailAFriend_Client
                 connectDone.WaitOne();
 
                 // Send test data to the remote device.
-                Send(client, "This is a test<EOF>");
+                Send(client, "err|password<EOF>");
                 sendDone.WaitOne();
 
                 // Receive the response from the remote device.
@@ -60,7 +61,7 @@ namespace MailAFriend_Client
 
                 // Write the response to the console.
                 display = "Response received : " + response;
-                fmc.clientDislpay(display);
+                formDisplay.Text = display;
 
                 // Release the socket.
                 
@@ -70,7 +71,6 @@ namespace MailAFriend_Client
             {
                 MessageBox.Show(ex.ToString());
             }
-            fmc.Dispose();
         }
 
         public static void stopClient()
@@ -78,9 +78,10 @@ namespace MailAFriend_Client
             try
             {
                 // Release the socket.
-                client.Shutdown(SocketShutdown.Both);
-                client.Close();
-
+                //client.Shutdown(SocketShutdown.Both);
+                //client.Close();
+                Send(client, "This is a test <ENDCONNECT>");
+                sendDone.WaitOne();
             }
             catch (Exception ex) 
             { 
@@ -91,7 +92,6 @@ namespace MailAFriend_Client
 
         private static void ConnectCallback(IAsyncResult ar)
         {
-            FormClient fmc = new FormClient();
             try
             {
                 // Retrieve the socket from the state object.
@@ -100,9 +100,6 @@ namespace MailAFriend_Client
                 // Complete the connection.
                 client.EndConnect(ar);
 
-                display = "Socket connected to " + client.RemoteEndPoint.ToString();
-                fmc.clientDislpay(display);
-
                 // Signal that the connection has been made.
                 connectDone.Set();
             }
@@ -110,7 +107,6 @@ namespace MailAFriend_Client
             {
                 MessageBox.Show(ex.ToString());
             }
-            fmc.Dispose();
         }
 
         private static void Receive(Socket client)
@@ -119,11 +115,14 @@ namespace MailAFriend_Client
             try
             {
                 // Create the state object.
-                clientSocket state = new clientSocket();
+                ClientSocket state = new ClientSocket();
                 state.socket = client;
 
+                display = "Socket connected to " + client.RemoteEndPoint.ToString();
+                state.formDisplay.Text = display;
+
                 // Begin receiving the data from the remote device.
-                client.BeginReceive(state.buffer, 0, clientSocket.bufferSize, 0,
+                client.BeginReceive(state.buffer, 0, ClientSocket.bufferSize, 0,
                     new AsyncCallback(ReceiveCallback), state);
             }
             catch (Exception ex)
@@ -139,7 +138,7 @@ namespace MailAFriend_Client
             {
                 // Retrieve the state object and the client socket 
                 // from the asynchronous state object.
-                clientSocket state = (clientSocket)ar.AsyncState;
+                ClientSocket state = (ClientSocket)ar.AsyncState;
                 Socket client = state.socket;
 
                 // Read data from the remote device.
@@ -151,7 +150,7 @@ namespace MailAFriend_Client
                     state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
 
                     // Get the rest of the data.
-                    client.BeginReceive(state.buffer, 0, clientSocket.bufferSize, 0,
+                    client.BeginReceive(state.buffer, 0, ClientSocket.bufferSize, 0,
                         new AsyncCallback(ReceiveCallback), state);
                 }
                 else
@@ -183,7 +182,6 @@ namespace MailAFriend_Client
 
         private static void SendCallback(IAsyncResult ar)
         {
-            FormClient fmc = new FormClient();
             try
             {
                 // Retrieve the socket from the state object.
@@ -191,8 +189,6 @@ namespace MailAFriend_Client
 
                 // Complete sending the data to the remote device.
                 int bytesSent = client.EndSend(ar);
-                display = "Sent " +  bytesSent + " bytes to server.";
-                fmc.clientDislpay(display);
 
                 // Signal that all bytes have been sent.
                 sendDone.Set();
@@ -201,11 +197,10 @@ namespace MailAFriend_Client
             {
                 MessageBox.Show(ex.ToString());
             }
-            fmc.Dispose();
         }
 
     }
-    public class clientSocket
+    public class ClientSocket
     {
         // Client socket.
         public Socket socket = null;
@@ -215,5 +210,7 @@ namespace MailAFriend_Client
         public byte[] buffer = new byte[bufferSize];
         // Received data string.
         public StringBuilder sb = new StringBuilder();
+        // Communicator with form display.
+        public TextBox formDisplay = Application.OpenForms["FormClient"].Controls["tbDisplay"] as TextBox;
     }
 }

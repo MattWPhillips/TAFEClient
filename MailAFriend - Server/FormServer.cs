@@ -4,27 +4,31 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace MailAFriend_Server
+namespace MailAFriend___Server
 {
     public partial class FormServer : Form
     {
-
-        public string displayData;
-
+ 
         public FormServer()
         {
             InitializeComponent();
-            tbServer.Text = "Server Started";
-        }
-
-        private void btnStart_Click(object sender, EventArgs e)
-        {
             Server.StartServer();
         }
+
+        public static void serverDislpay(string data)
+        {
+            FormServer form = new FormServer();
+            
+            form.tbServer.Text += data + "\r\n";
+        }
+
     }
+
 }

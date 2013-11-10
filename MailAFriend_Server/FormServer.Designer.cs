@@ -30,7 +30,7 @@
         {
             this.btnStart = new System.Windows.Forms.Button();
             this.btnStop = new System.Windows.Forms.Button();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.tbServer = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // btnStart
@@ -54,20 +54,20 @@
             this.btnStop.Text = "Stop";
             this.btnStop.UseVisualStyleBackColor = true;
             // 
-            // textBox1
+            // tbServer
             // 
-            this.textBox1.Location = new System.Drawing.Point(12, 12);
-            this.textBox1.Multiline = true;
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(260, 208);
-            this.textBox1.TabIndex = 2;
+            this.tbServer.Location = new System.Drawing.Point(12, 12);
+            this.tbServer.Multiline = true;
+            this.tbServer.Name = "tbServer";
+            this.tbServer.Size = new System.Drawing.Size(260, 208);
+            this.tbServer.TabIndex = 2;
             // 
             // FormServer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(284, 261);
-            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.tbServer);
             this.Controls.Add(this.btnStop);
             this.Controls.Add(this.btnStart);
             this.Name = "FormServer";
@@ -81,7 +81,7 @@
 
         private System.Windows.Forms.Button btnStart;
         private System.Windows.Forms.Button btnStop;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox tbServer;
 
     }
 }
