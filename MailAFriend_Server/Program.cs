@@ -18,5 +18,10 @@ namespace MailAFriend_Server
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new FormServer());
         }
+
+        public static void startTheServer() 
+        {
+            Server.StartServer();
+        }
     }
 }

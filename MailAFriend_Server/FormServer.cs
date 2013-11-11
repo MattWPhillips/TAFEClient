@@ -14,17 +14,21 @@ namespace MailAFriend_Server
     public partial class FormServer : Form
     {
 
-        public string displayData;
+
 
         public FormServer()
         {
             InitializeComponent();
-            tbServer.Text = "Server Started";
         }
 
         private void btnStart_Click(object sender, EventArgs e)
         {
-            Server.StartServer();
+            Program.startTheServer();
+        }
+
+        public void FormServer_Load(object sender, System.EventArgs e)
+        {
+
         }
     }
 }

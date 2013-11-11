@@ -15,17 +15,6 @@ namespace MailAFriend_Client
     {
         // The port number for the remote device.
         public const int port = 3456;
-        // Establish the remote endpoint for the socket.
-        // The name of the 
-        // remote device is "host.contoso.com".
-        public static IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
-        public static IPAddress ipAddress = ipHostInfo.AddressList[0];
-        public static IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
-
-
-        // Create a TCP/IP socket.
-        public static Socket client = new Socket(ipAddress.AddressFamily,
-            SocketType.Stream, ProtocolType.Tcp);
 
         // ManualResetEvent instances signal completion.
         private static ManualResetEvent connectDone =
@@ -39,33 +28,48 @@ namespace MailAFriend_Client
         private static String response = String.Empty;
         private static String display = String.Empty;
 
-        public static void startClient()
+        public static void startClient(ManualResetEvent taskDone)
         {
             TextBox formDisplay = Application.OpenForms["FormClient"].Controls["tbDisplay"] as TextBox;
-            // Connect to a remote device.
+            TextBox inputName = Application.OpenForms["FormClient"].Controls["tbName"] as TextBox;
+            TextBox inputPassword = Application.OpenForms["FormClient"].Controls["tbPassword"] as TextBox;
+            String username;
+            String password;
+            String sendCredentials;
+            // Connect to a remote form.
             try
             {
-                             
+                // Establish the remote endpoint for the socket.
+                // The name of the 
+                // remote device is "host.contoso.com".
+                IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
+                IPAddress ipAddress = ipHostInfo.AddressList[0];
+                IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
+
+
+                // Create a TCP/IP socket.
+                Socket client = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);          
                 // Connect to the remote endpoint.
-                client.BeginConnect(remoteEP,
-                    new AsyncCallback(ConnectCallback), client);
+                client.BeginConnect(remoteEP, new AsyncCallback(ConnectCallback), client);
                 connectDone.WaitOne();
 
                 // Send test data to the remote device.
-                Send(client, "err|password<EOF>");
+                username = inputName.Text;
+                password = inputPassword.Text;
+                sendCredentials = username + "|" + password + "<EOF>";
+                Send(client, sendCredentials);
                 sendDone.WaitOne();
 
                 // Receive the response from the remote device.
                 Receive(client);
                 receiveDone.WaitOne();
 
-                // Write the response to the console.
+                // Write the response to the form.
                 display = "Response received : " + response;
                 formDisplay.Text = display;
 
-                // Release the socket.
-                
-
+                //stopClient(client);
+                taskDone.WaitOne();
             }
             catch (Exception ex)
             {
@@ -73,15 +77,15 @@ namespace MailAFriend_Client
             }
         }
 
-        public static void stopClient()
+        public static void stopClient(Socket client)
         {
             try
             {
                 // Release the socket.
-                //client.Shutdown(SocketShutdown.Both);
-                //client.Close();
                 Send(client, "This is a test <ENDCONNECT>");
                 sendDone.WaitOne();
+                client.Shutdown(SocketShutdown.Both);
+                client.Close();
             }
             catch (Exception ex) 
             { 
@@ -150,8 +154,7 @@ namespace MailAFriend_Client
                     state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
 
                     // Get the rest of the data.
-                    client.BeginReceive(state.buffer, 0, ClientSocket.bufferSize, 0,
-                        new AsyncCallback(ReceiveCallback), state);
+                    client.BeginReceive(state.buffer, 0, ClientSocket.bufferSize, 0, new AsyncCallback(ReceiveCallback), state);
                 }
                 else
                 {
@@ -160,6 +163,7 @@ namespace MailAFriend_Client
                     {
                         response = state.sb.ToString();
                     }
+                    
                     // Signal that all bytes have been received.
                     receiveDone.Set();
                 }

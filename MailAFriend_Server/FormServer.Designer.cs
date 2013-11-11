@@ -72,6 +72,7 @@
             this.Controls.Add(this.btnStart);
             this.Name = "FormServer";
             this.Text = "Server";
+            this.Load += new System.EventHandler(this.FormServer_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

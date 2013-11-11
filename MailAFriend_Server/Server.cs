@@ -22,6 +22,7 @@ namespace MailAFriend_Server
             display = String.Empty;
             // Data buffer for incoming data.
             byte[] bytes = new Byte[1024];
+            TextBox formDisplay = Application.OpenForms["FormServer"].Controls["tbServer"] as TextBox;
 
             // Establish the local endpoint for the socket.
             IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
@@ -35,22 +36,21 @@ namespace MailAFriend_Server
             // Bind the socket to the local endpoint and listen for incoming connections.
             try
             {
-                TextBox formDisplay = Application.OpenForms["FormServer"].Controls["tbServer"] as TextBox;
+
                 serverSocket.Bind(localEndPoint);
-                serverSocket.Listen(1000);
+                serverSocket.Listen(10);
+                formDisplay.Text = "Server On";
 
                 while (true)
                 {
                     // Set the event to nonsignaled state.
                     allDone.Reset();
-                    formDisplay.Text = "Server Started";
-                          
                     // Start an asynchronous socket to listen for connections.
-                    serverSocket.BeginAccept(
-                        new AsyncCallback(AcceptCallback), serverSocket);
+                    serverSocket.BeginAccept(new AsyncCallback(AcceptCallback), serverSocket);
 
                     // Wait until a connection is made before continuing.
                     allDone.WaitOne();
+                    formDisplay.Text += "Client connected"; 
                 }
 
             }
@@ -66,7 +66,7 @@ namespace MailAFriend_Server
             display = String.Empty;
             // Signal the main thread to continue.
             allDone.Set();
-
+            
             // Get the socket that handles the client request.
             Socket severSocket = (Socket)ar.AsyncState;
             Socket handler = severSocket.EndAccept(ar);
@@ -74,8 +74,7 @@ namespace MailAFriend_Server
             // Create the state object.
             ClientSocket client = new ClientSocket();
             client.socket = handler;
-            handler.BeginReceive(client.buffer, 0, ClientSocket.bufferSizeConst, 0,
-                new AsyncCallback(ReadCallback), client);
+            handler.BeginReceive(client.buffer, 0, ClientSocket.bufferSizeConst, 0, new AsyncCallback(ReadCallback), client);
         }
 
         public static void ReadCallback(IAsyncResult ar)
@@ -100,6 +99,7 @@ namespace MailAFriend_Server
                 // Check for end-of-file tag. If it is not there, read 
                 // more data.
                 data = client.sb.ToString();
+
                 if (data.IndexOf("<EOF>") > -1)
                 {
                     LoginCheck loginCheck = new LoginCheck(data);
@@ -114,7 +114,8 @@ namespace MailAFriend_Server
                 }
                 else if (data.IndexOf("<ENDCONNECT>") > -1)
                 {
-                    client.socket.Shutdown(SocketShutdown.Both);
+                    Send(handler, data);
+                    handler.Shutdown(SocketShutdown.Both);
                 }
                 else
                 {
@@ -137,7 +138,7 @@ namespace MailAFriend_Server
 
         private static void SendCallback(IAsyncResult ar)
         {
-            TextBox formDisplay = Application.OpenForms["FormServer"].Controls["tbServer"] as TextBox;
+ 
             try
             {
                 // Retrieve the socket from the state object.
@@ -146,11 +147,8 @@ namespace MailAFriend_Server
                 // Complete sending the data to the remote device.
                 int bytesSent = handler.EndSend(ar);
                 display += "Sent " + bytesSent + " bytes to client.";
-                //formDisplay.Text = display;
 
-                handler.Shutdown(SocketShutdown.Both);
-                //handler.Close();
-
+                
             }
             catch (Exception ex)
             {
