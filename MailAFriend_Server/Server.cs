@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Windows.Forms;
+using System.Collections;
 
 
 namespace MailAFriend_Server
@@ -16,6 +17,7 @@ namespace MailAFriend_Server
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
         public static string display { get; set; }
+        public static HashMapLinkedList emailDatabaseServer = new HashMapLinkedList();
 
         public static void StartServer()
         {
@@ -23,7 +25,7 @@ namespace MailAFriend_Server
             // Data buffer for incoming data.
             byte[] bytes = new Byte[1024];
             TextBox formDisplay = Application.OpenForms["FormServer"].Controls["tbServer"] as TextBox;
-
+            
             // Establish the local endpoint for the socket.
             IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
             IPAddress ipAddress = ipHostInfo.AddressList[0];
@@ -81,6 +83,7 @@ namespace MailAFriend_Server
         {
             String data = String.Empty;
             display = String.Empty;
+            Hashtable retrieveEmails = new Hashtable();
 
             // Retrieve the state object and the handler socket
             // from the asynchronous state object.
@@ -117,6 +120,20 @@ namespace MailAFriend_Server
                     Send(handler, data);
                     handler.Shutdown(SocketShutdown.Both);
                 }
+                else if (data.IndexOf("<MAILSEND>") > -1)
+                {
+                    emailDatabaseServer.newEmail(data);
+                }
+                else if (data.IndexOf("<MAILRECEIVE>") > -1)
+                {
+                    retrieveEmails = emailDatabaseServer.retrieveEmail(data);
+                    foreach (string value in retrieveEmails.Values)
+                    {
+                        //convert value into ascci data
+                        Send(handler, data);
+                    }
+                }
+
                 else
                 {
                     // Not all data received. Get more.

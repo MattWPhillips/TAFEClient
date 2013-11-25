@@ -65,6 +65,8 @@
     <Compile Include="FormServer.Designer.cs">
       <DependentUpon>FormServer.cs</DependentUpon>
     </Compile>
+    <Compile Include="HashMapLinkedList.cs" />
+    <Compile Include="LinkedList.cs" />
     <Compile Include="LoginCheck.cs" />
     <Compile Include="Mail.cs" />
     <Compile Include="Program.cs" />
