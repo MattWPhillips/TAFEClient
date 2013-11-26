@@ -53,6 +53,7 @@
             this.btnStop.TabIndex = 1;
             this.btnStop.Text = "Stop";
             this.btnStop.UseVisualStyleBackColor = true;
+            this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
             // 
             // tbServer
             // 
@@ -72,7 +73,6 @@
             this.Controls.Add(this.btnStart);
             this.Name = "FormServer";
             this.Text = "Server";
-            this.Load += new System.EventHandler(this.FormServer_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

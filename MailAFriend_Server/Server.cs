@@ -18,13 +18,32 @@ namespace MailAFriend_Server
         public static ManualResetEvent allDone = new ManualResetEvent(false);
         public static string display { get; set; }
         public static HashMapLinkedList emailDatabaseServer = new HashMapLinkedList();
+        private volatile bool stopServer = false;
 
-        public static void StartServer()
+        public Thread serverThread;
+
+
+        public delegate void serverThreadHandler();
+
+
+        public event serverThreadHandler serverThreadComplete;
+
+
+        public void startTheServer()
+        {
+            serverThread = new Thread(new ThreadStart(this.startServer));
+            serverThread.Start();
+        }
+        public void stopTheServer()
+        {
+            stopServer = true;
+            allDone.Set();
+        }
+        public void startServer()
         {
             display = String.Empty;
             // Data buffer for incoming data.
             byte[] bytes = new Byte[1024];
-            TextBox formDisplay = Application.OpenForms["FormServer"].Controls["tbServer"] as TextBox;
             
             // Establish the local endpoint for the socket.
             IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
@@ -41,9 +60,8 @@ namespace MailAFriend_Server
 
                 serverSocket.Bind(localEndPoint);
                 serverSocket.Listen(10);
-                formDisplay.Text = "Server On";
 
-                while (true)
+                while (!stopServer)
                 {
                     // Set the event to nonsignaled state.
                     allDone.Reset();
@@ -52,8 +70,10 @@ namespace MailAFriend_Server
 
                     // Wait until a connection is made before continuing.
                     allDone.WaitOne();
-                    formDisplay.Text += "Client connected"; 
                 }
+
+                //serverSocket.Close();
+                serverThreadComplete();
 
             }
             catch (Exception ex)
@@ -184,13 +204,6 @@ namespace MailAFriend_Server
         public byte[] buffer = new byte[bufferSizeConst];
         // Received data string.
         public StringBuilder sb = new StringBuilder();
-        // Communicator with form display.
-        public TextBox formDisplay = Application.OpenForms["FormServer"].Controls["tbServer"] as TextBox;
-
-        public void serverDisplay(string data)
-        {
-            formDisplay.Text += data;
-        }
 
     }
 }

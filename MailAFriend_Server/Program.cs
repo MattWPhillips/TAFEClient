@@ -19,9 +19,5 @@ namespace MailAFriend_Server
             Application.Run(new FormServer());
         }
 
-        public static void startTheServer() 
-        {
-            Server.StartServer();
-        }
     }
 }

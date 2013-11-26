@@ -11,6 +11,7 @@
     <AssemblyName>MailAFriend_Server</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -23,7 +24,6 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
@@ -67,6 +67,7 @@
     </Compile>
     <Compile Include="HashMapLinkedList.cs" />
     <Compile Include="LinkedList.cs" />
+    <Compile Include="LinkedListNode.cs" />
     <Compile Include="LoginCheck.cs" />
     <Compile Include="Mail.cs" />
     <Compile Include="Program.cs" />

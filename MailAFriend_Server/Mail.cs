@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace MailAFriend_Server
 {
-    class Mail
+    public class Mail
     {
-    
+
         public String from { get; set; }
         public String to { get; set; }
         public String subject { get; set; }
@@ -25,7 +25,7 @@ namespace MailAFriend_Server
             this.content = content;
             this.received = "no";
             this.read = "no";
-        } 
+        }
 
         public String sendFormat()
         {

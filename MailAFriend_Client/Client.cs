@@ -24,15 +24,31 @@ namespace MailAFriend_Client
         private static ManualResetEvent receiveDone =
             new ManualResetEvent(false);
 
-        // The response from the remote device.
-        private static String response = String.Empty;
-        private static String display = String.Empty;
+        private volatile bool ClientOn = false;
 
-        public static void startClient(ManualResetEvent taskDone)
+        public Thread clientThread;
+
+
+        public delegate void clientThreadHandler();
+
+
+        public event clientThreadHandler clientThreadComplete;
+
+
+        public void startTheClient()
         {
-            TextBox formDisplay = Application.OpenForms["FormClient"].Controls["tbDisplay"] as TextBox;
-            TextBox inputName = Application.OpenForms["FormClient"].Controls["tbName"] as TextBox;
-            TextBox inputPassword = Application.OpenForms["FormClient"].Controls["tbPassword"] as TextBox;
+            clientThread = new Thread(new ThreadStart(this.startClient));
+            clientThread.Start();
+        }
+        public void stopTheClient()
+        {
+            ClientOn = false;
+ 
+        }
+
+        public void startClient()
+        {
+
             String username;
             String password;
             String sendCredentials;
