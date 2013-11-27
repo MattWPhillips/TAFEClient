@@ -19,9 +19,10 @@ namespace MailAFriend_Server
         {
             LinkedList emailList = new LinkedList();
             String[] mailData;
-            data = data.Remove(data.Length - 5);
+            data = data.Remove(data.Length - 20);
             mailData = data.Split('|');
-            Mail mail = new Mail(mailData[0],mailData[1],mailData[2],mailData[3]);
+            Mail mail = new Mail(mailData[0], mailData[1], mailData[2], mailData[3]);
+
             if (emailDatabase.ContainsKey(mail.to))
             {
                 emailList = (LinkedList)emailDatabase[mail.to];
@@ -42,6 +43,7 @@ namespace MailAFriend_Server
 
             Hashtable usersEmails = new Hashtable();
             LinkedList tempList = new LinkedList();
+            userName = userName.Remove(userName.Length - 20);
 
             if (emailDatabase.ContainsKey(userName))
             {

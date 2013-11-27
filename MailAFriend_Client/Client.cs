@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Windows.Forms;
+using System.Collections;
 
 
 namespace MailAFriend_Client
@@ -24,17 +25,21 @@ namespace MailAFriend_Client
         private static ManualResetEvent receiveDone =
             new ManualResetEvent(false);
 
+        public String username;
+        public String password;
+        public String sendCredentials;
+        public static int indx = 0;
+        public static String response;
+        public static Hashtable newEmails = new Hashtable();
+
         private volatile bool ClientOn = false;
 
         public Thread clientThread;
-
-
-        public delegate void clientThreadHandler();
-
-
+        
+        public delegate void clientThreadHandler(string message, Hashtable emails);
+        
         public event clientThreadHandler clientThreadComplete;
-
-
+        
         public void startTheClient()
         {
             clientThread = new Thread(new ThreadStart(this.startClient));
@@ -43,16 +48,10 @@ namespace MailAFriend_Client
         public void stopTheClient()
         {
             ClientOn = false;
- 
         }
 
         public void startClient()
         {
-
-            String username;
-            String password;
-            String sendCredentials;
-            // Connect to a remote form.
             try
             {
                 // Establish the remote endpoint for the socket.
@@ -70,9 +69,7 @@ namespace MailAFriend_Client
                 connectDone.WaitOne();
 
                 // Send test data to the remote device.
-                username = inputName.Text;
-                password = inputPassword.Text;
-                sendCredentials = username + "|" + password + "<EOF>";
+                sendCredentials = username + "|" + password + "<LOGIN><MAILRECEIVE>";
                 Send(client, sendCredentials);
                 sendDone.WaitOne();
 
@@ -80,12 +77,7 @@ namespace MailAFriend_Client
                 Receive(client);
                 receiveDone.WaitOne();
 
-                // Write the response to the form.
-                display = "Response received : " + response;
-                formDisplay.Text = display;
-
-                //stopClient(client);
-                taskDone.WaitOne();
+                clientThreadComplete(response, newEmails);
             }
             catch (Exception ex)
             {
@@ -98,8 +90,6 @@ namespace MailAFriend_Client
             try
             {
                 // Release the socket.
-                Send(client, "This is a test <ENDCONNECT>");
-                sendDone.WaitOne();
                 client.Shutdown(SocketShutdown.Both);
                 client.Close();
             }
@@ -138,9 +128,6 @@ namespace MailAFriend_Client
                 ClientSocket state = new ClientSocket();
                 state.socket = client;
 
-                display = "Socket connected to " + client.RemoteEndPoint.ToString();
-                state.formDisplay.Text = display;
-
                 // Begin receiving the data from the remote device.
                 client.BeginReceive(state.buffer, 0, ClientSocket.bufferSize, 0,
                     new AsyncCallback(ReceiveCallback), state);
@@ -178,6 +165,8 @@ namespace MailAFriend_Client
                     if (state.sb.Length > 1)
                     {
                         response = state.sb.ToString();
+                        indx++;
+                        newEmails.Add(indx, response);
                     }
                     
                     // Signal that all bytes have been received.

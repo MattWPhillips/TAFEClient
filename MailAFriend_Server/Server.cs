@@ -16,9 +16,9 @@ namespace MailAFriend_Server
     {
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
-        public static string display { get; set; }
         public static HashMapLinkedList emailDatabaseServer = new HashMapLinkedList();
         private volatile bool stopServer = false;
+ 
 
         public Thread serverThread;
 
@@ -41,7 +41,6 @@ namespace MailAFriend_Server
         }
         public void startServer()
         {
-            display = String.Empty;
             // Data buffer for incoming data.
             byte[] bytes = new Byte[1024];
             
@@ -85,7 +84,6 @@ namespace MailAFriend_Server
         public static void AcceptCallback(IAsyncResult ar)
         {
 
-            display = String.Empty;
             // Signal the main thread to continue.
             allDone.Set();
             
@@ -102,7 +100,6 @@ namespace MailAFriend_Server
         public static void ReadCallback(IAsyncResult ar)
         {
             String data = String.Empty;
-            display = String.Empty;
             Hashtable retrieveEmails = new Hashtable();
 
             // Retrieve the state object and the handler socket
@@ -123,37 +120,39 @@ namespace MailAFriend_Server
                 // more data.
                 data = client.sb.ToString();
 
-                if (data.IndexOf("<EOF>") > -1)
+                if (data.IndexOf("<LOGIN>") > -1)
                 {
                     LoginCheck loginCheck = new LoginCheck(data);
                     if (loginCheck.checkID())
                     {
                         Send(handler, "validUser<EOF>");
+                        if (data.IndexOf("<MAILSEND>") > -1)
+                       {
+                           emailDatabaseServer.newEmail(data);
+                       }
+                       else if (data.IndexOf("<MAILRECEIVE>") > -1)
+                       {
+                            retrieveEmails = emailDatabaseServer.retrieveEmail(data);
+                            foreach (string value in retrieveEmails.Values)
+                            {
+                                //convert value into ascci data
+                                Send(handler, data);
+                            }
+
+                            //Lastmessage sent confirmation
+                            Send(handler, data);
+                        }
                     }
                     else
                     {
-                        Send(handler, "Invalid user "+ data);
+                        Send(handler, "Invalid user<EOF>"+ data);
                     }
                 }
                 else if (data.IndexOf("<ENDCONNECT>") > -1)
                 {
                     Send(handler, data);
                     handler.Shutdown(SocketShutdown.Both);
-                }
-                else if (data.IndexOf("<MAILSEND>") > -1)
-                {
-                    emailDatabaseServer.newEmail(data);
-                }
-                else if (data.IndexOf("<MAILRECEIVE>") > -1)
-                {
-                    retrieveEmails = emailDatabaseServer.retrieveEmail(data);
-                    foreach (string value in retrieveEmails.Values)
-                    {
-                        //convert value into ascci data
-                        Send(handler, data);
-                    }
-                }
-
+                } 
                 else
                 {
                     // Not all data received. Get more.
@@ -183,9 +182,10 @@ namespace MailAFriend_Server
 
                 // Complete sending the data to the remote device.
                 int bytesSent = handler.EndSend(ar);
-                display += "Sent " + bytesSent + " bytes to client.";
 
-                
+                    handler.Shutdown(SocketShutdown.Both);
+                    //handler.Close();
+
             }
             catch (Exception ex)
             {

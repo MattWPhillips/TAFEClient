@@ -21,8 +21,7 @@ namespace MailAFriend_Server
         {
             tbServer.Text = "Server Stoped";
         }
-
-
+        
         public FormServer()
         {
             InitializeComponent();
