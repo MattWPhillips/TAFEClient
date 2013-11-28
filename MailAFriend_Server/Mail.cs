@@ -29,9 +29,7 @@ namespace MailAFriend_Server
 
         public String sendFormat()
         {
-            return from + "|" + to + "|" + subject + "|" + content + "|" + received + "|" + read + "<EOF>";
+            return from + "|" + to + "|" + subject + "|" + content + "|" + received + "|" + read + "~";
         }
-
-
     }
 }

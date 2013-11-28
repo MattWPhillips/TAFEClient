@@ -22,6 +22,7 @@ namespace MailAFriend_Client
 
         public void clientDoneHandlerMessage(string data, Hashtable emails)
         {
+            MessageBox.Show("Job Done");
             tbDisplay.Text = data;
             newEmails = emails;
             createEmailList();
@@ -50,12 +51,13 @@ namespace MailAFriend_Client
             client.username = tbName.Text;
             client.password = tbPassword.Text;
             tbDisplay.Text = "Connecting to Server...";
-            client.startClient();
+            client.startTheClient("");
         }
 
         private void btnDisconnect_Click(object sender, EventArgs e)
         {
-
+            tbDisplay.Text = "Disconnected";
+            client.stopTheClient();
         }
 
         private void clientDoneHandler(string message, Hashtable emails)
@@ -63,5 +65,36 @@ namespace MailAFriend_Client
             this.BeginInvoke(new clientHandler(clientDoneHandlerMessage), new Object[] { message, emails });
         }
 
+        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            
+            String data;
+            int selection = (int)listBox1.SelectedItem;
+            data = (String)newEmails[selection];
+            Mail mail = new Mail(data);
+            tbFrom.Text = mail.from;
+            tbTo.Text = mail.to;
+            TbSubject.Text = mail.subject;
+            tbDisplay.Text = mail.content;
+            mail.read = "yes";
+
+        }
+
+        private void btnSend_Click(object sender, EventArgs e)
+        {
+            String tempmessge = null;
+            Mail mail = new Mail(tbFrom.Text, tbTo.Text, TbSubject.Text, tbDisplay.Text);
+            tempmessge = mail.sendFormat() + "<SEND>";
+
+            client.startTheClient(tempmessge);   
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            client.username = tbName.Text;
+            client.password = tbPassword.Text;
+            tbDisplay.Text = "Retieving mail";
+            client.startTheClient("<RETR>");
+        }
     }
 }

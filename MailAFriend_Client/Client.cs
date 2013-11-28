@@ -27,12 +27,13 @@ namespace MailAFriend_Client
 
         public String username;
         public String password;
-        public String sendCredentials;
+        public String message;
+        public String newEmail;
+        public String messageEnd = "<EOF>";
         public static int indx = 0;
         public static String response;
         public static Hashtable newEmails = new Hashtable();
-
-        private volatile bool ClientOn = false;
+        private volatile bool stopClientConnection = false;
 
         public Thread clientThread;
         
@@ -40,15 +41,19 @@ namespace MailAFriend_Client
         
         public event clientThreadHandler clientThreadComplete;
         
-        public void startTheClient()
+        public void startTheClient(String action)
         {
+            message = username + "|" + password + "|" + action  + messageEnd;
             clientThread = new Thread(new ThreadStart(this.startClient));
             clientThread.Start();
         }
+        
         public void stopTheClient()
         {
-            ClientOn = false;
+            stopClientConnection = true;
+            receiveDone.Set();
         }
+
 
         public void startClient()
         {
@@ -61,22 +66,26 @@ namespace MailAFriend_Client
                 IPAddress ipAddress = ipHostInfo.AddressList[0];
                 IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
 
+                while (!stopClientConnection)
+                {
+                    connectDone.Reset();
+                    sendDone.Reset();
+                    receiveDone.Reset();
+                    // Create a TCP/IP socket.
+                    Socket client = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    // Connect to the remote endpoint.
+                    client.BeginConnect(remoteEP, new AsyncCallback(ConnectCallback), client);
+                    connectDone.WaitOne();
 
-                // Create a TCP/IP socket.
-                Socket client = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);          
-                // Connect to the remote endpoint.
-                client.BeginConnect(remoteEP, new AsyncCallback(ConnectCallback), client);
-                connectDone.WaitOne();
+                    // Send test data to the remote device.
+                    
+                    Send(client, message);
+                    sendDone.WaitOne();
 
-                // Send test data to the remote device.
-                sendCredentials = username + "|" + password + "<LOGIN><MAILRECEIVE>";
-                Send(client, sendCredentials);
-                sendDone.WaitOne();
-
-                // Receive the response from the remote device.
-                Receive(client);
-                receiveDone.WaitOne();
-
+                    // Receive the response from the remote device.
+                    Receive(client);
+                    receiveDone.WaitOne();
+                }
                 clientThreadComplete(response, newEmails);
             }
             catch (Exception ex)
@@ -147,7 +156,6 @@ namespace MailAFriend_Client
                 // from the asynchronous state object.
                 ClientSocket state = (ClientSocket)ar.AsyncState;
                 Socket client = state.socket;
-
                 // Read data from the remote device.
                 int bytesRead = client.EndReceive(ar);
 
@@ -158,6 +166,7 @@ namespace MailAFriend_Client
 
                     // Get the rest of the data.
                     client.BeginReceive(state.buffer, 0, ClientSocket.bufferSize, 0, new AsyncCallback(ReceiveCallback), state);
+                    
                 }
                 else
                 {
@@ -165,10 +174,9 @@ namespace MailAFriend_Client
                     if (state.sb.Length > 1)
                     {
                         response = state.sb.ToString();
-                        indx++;
-                        newEmails.Add(indx, response);
+                        assessMessage(response);
                     }
-                    
+
                     // Signal that all bytes have been received.
                     receiveDone.Set();
                 }
@@ -178,6 +186,30 @@ namespace MailAFriend_Client
                 MessageBox.Show(ex.ToString());
             }
         }
+
+        private static void assessMessage(string response)
+        {
+            if (response.IndexOf("<EOF>") > -1)
+            {
+                    if (response.IndexOf("<SEND>") > -1)
+                    {
+                        response = response.Remove(response.Length - 11);
+                    }
+                    else if (response.IndexOf("<RETR>") > -1)
+                    {
+                        int newEmailID =0;
+                        String[] mailData;
+                        String[] stringSeperator1 = new String[] {"~"};
+                        response = response.Remove(response.Length - 11);
+                        mailData = response.Split(stringSeperator1,StringSplitOptions.RemoveEmptyEntries);
+                        foreach (String mail in mailData)
+                        {
+                            newEmails.Add(newEmailID,mail);
+                            newEmailID++;
+                        }
+                    }
+                }
+            }
 
         private static void Send(Socket client, String data)
         {
@@ -214,7 +246,7 @@ namespace MailAFriend_Client
         // Client socket.
         public Socket socket = null;
         // Size of receive buffer.
-        public const int bufferSize = 256;
+        public const int bufferSize = 1400;
         // Receive buffer.
         public byte[] buffer = new byte[bufferSize];
         // Received data string.

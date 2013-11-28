@@ -18,7 +18,6 @@ namespace MailAFriend_Server
         public static ManualResetEvent allDone = new ManualResetEvent(false);
         public static HashMapLinkedList emailDatabaseServer = new HashMapLinkedList();
         private volatile bool stopServer = false;
- 
 
         public Thread serverThread;
 
@@ -43,7 +42,7 @@ namespace MailAFriend_Server
         {
             // Data buffer for incoming data.
             byte[] bytes = new Byte[1024];
-            
+
             // Establish the local endpoint for the socket.
             IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
             IPAddress ipAddress = ipHostInfo.AddressList[0];
@@ -86,11 +85,11 @@ namespace MailAFriend_Server
 
             // Signal the main thread to continue.
             allDone.Set();
-            
+
             // Get the socket that handles the client request.
             Socket severSocket = (Socket)ar.AsyncState;
             Socket handler = severSocket.EndAccept(ar);
-   
+
             // Create the state object.
             ClientSocket client = new ClientSocket();
             client.socket = handler;
@@ -100,7 +99,8 @@ namespace MailAFriend_Server
         public static void ReadCallback(IAsyncResult ar)
         {
             String data = String.Empty;
-            Hashtable retrieveEmails = new Hashtable();
+            String confirmSend = String.Empty;
+            String retrieveEmails = String.Empty;
 
             // Retrieve the state object and the handler socket
             // from the asynchronous state object.
@@ -120,45 +120,33 @@ namespace MailAFriend_Server
                 // more data.
                 data = client.sb.ToString();
 
-                if (data.IndexOf("<LOGIN>") > -1)
+                if (data.IndexOf("<EOF>") > -1)
                 {
                     LoginCheck loginCheck = new LoginCheck(data);
                     if (loginCheck.checkID())
                     {
-                        Send(handler, "validUser<EOF>");
-                        if (data.IndexOf("<MAILSEND>") > -1)
-                       {
-                           emailDatabaseServer.newEmail(data);
-                       }
-                       else if (data.IndexOf("<MAILRECEIVE>") > -1)
-                       {
+                        if (data.IndexOf("<SEND>") > -1)
+                        {
+                            confirmSend = emailDatabaseServer.newEmail(data);
+                            Send(handler, confirmSend);
+                        }
+                        else if (data.IndexOf("<RETR>") > -1)
+                        {
                             retrieveEmails = emailDatabaseServer.retrieveEmail(data);
-                            foreach (string value in retrieveEmails.Values)
-                            {
-                                //convert value into ascci data
-                                Send(handler, data);
-                            }
-
-                            //Lastmessage sent confirmation
-                            Send(handler, data);
+                            Send(handler, retrieveEmails);
                         }
                     }
                     else
                     {
-                        Send(handler, "Invalid user<EOF>"+ data);
+                        Send(handler, "Invalid user" + data + "<EOF>");
                     }
                 }
-                else if (data.IndexOf("<ENDCONNECT>") > -1)
-                {
-                    Send(handler, data);
-                    handler.Shutdown(SocketShutdown.Both);
-                } 
-                else
-                {
-                    // Not all data received. Get more.
-                    handler.BeginReceive(client.buffer, 0, ClientSocket.bufferSizeConst, 0,
-                    new AsyncCallback(ReadCallback), client);
-                }
+            }
+            else
+            {
+                // Not all data received. Get more.
+                handler.BeginReceive(client.buffer, 0, ClientSocket.bufferSizeConst, 0,
+                new AsyncCallback(ReadCallback), client);
             }
         }
 
@@ -174,7 +162,7 @@ namespace MailAFriend_Server
 
         private static void SendCallback(IAsyncResult ar)
         {
- 
+
             try
             {
                 // Retrieve the socket from the state object.
@@ -183,9 +171,8 @@ namespace MailAFriend_Server
                 // Complete sending the data to the remote device.
                 int bytesSent = handler.EndSend(ar);
 
-                    handler.Shutdown(SocketShutdown.Both);
-                    //handler.Close();
-
+                handler.Shutdown(SocketShutdown.Both);
+                handler.Close();
             }
             catch (Exception ex)
             {
@@ -199,7 +186,7 @@ namespace MailAFriend_Server
         // Client  socket.
         public Socket socket = null;
         // Size of receive buffer.
-        public const int bufferSizeConst = 1024;
+        public const int bufferSizeConst = 1400;
         // Receive buffer.
         public byte[] buffer = new byte[bufferSizeConst];
         // Received data string.

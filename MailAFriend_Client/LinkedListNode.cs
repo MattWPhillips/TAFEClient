@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MailAFriend_Server
+namespace MailAFriend_Client
 {
     public class Node
     {

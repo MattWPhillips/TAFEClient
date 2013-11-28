@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace MailAFriend_Server
+namespace MailAFriend_Client
 {
     class HashMapLinkedList
     {

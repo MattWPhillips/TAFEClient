@@ -15,44 +15,49 @@ namespace MailAFriend_Server
         LinkedList emailList = new LinkedList();
         
         
-        public void newEmail(string data)
+        public string newEmail(string data)
         {
             LinkedList emailList = new LinkedList();
             String[] mailData;
-            data = data.Remove(data.Length - 20);
+            data = data.Remove(data.Length - 5);
             mailData = data.Split('|');
-            Mail mail = new Mail(mailData[0], mailData[1], mailData[2], mailData[3]);
+            Mail mail = new Mail(mailData[2], mailData[3], mailData[4], mailData[5]);
 
             if (emailDatabase.ContainsKey(mail.to))
             {
                 emailList = (LinkedList)emailDatabase[mail.to];
                 emailList.add(mail);
-                emailDatabase.Add(mail.to, emailList);
+                emailDatabase[mail.to] = emailList;
             }
             else 
             {
                 emailList.add(mail);
                 emailDatabase.Add(mail.to, emailList);
             }
+            return "message sent<SEND><EOF>";
             
         }
 
 
-        public Hashtable retrieveEmail(string userName)
+        public String retrieveEmail(string data)
         {
-
-            Hashtable usersEmails = new Hashtable();
+            String usersEmails = null;
+            String user = null;
             LinkedList tempList = new LinkedList();
-            userName = userName.Remove(userName.Length - 20);
+            String[] userPass;
+            
+            data = data.Remove(data.Length - 5);
+            userPass = data.Split('|');
+            user = userPass[0];
 
-            if (emailDatabase.ContainsKey(userName))
+            if (emailDatabase.ContainsKey(user))
             {
-                tempList = (LinkedList)emailDatabase[userName];
-                usersEmails = tempList.DisplayAllNodes();
+                tempList = (LinkedList)emailDatabase[user];
+                usersEmails = tempList.DisplayAllNodes() + "<RETR><EOF>";
             }
             else
             {
-                usersEmails = null;
+                usersEmails = "<EOF>";
             }
             return usersEmails;
         }

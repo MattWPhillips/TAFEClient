@@ -12,8 +12,7 @@ namespace MailAFriend_Server
     {
         public string user;
         public string password;
-
-
+        
         public LoginCheck(string data)
         {
             String[] userPass;

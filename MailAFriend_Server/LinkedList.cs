@@ -57,16 +57,13 @@ namespace MailAFriend_Server
             }
         }
 
-        public Hashtable DisplayAllNodes()
+        public string DisplayAllNodes()
         {
             Node node = firstNode;
-            Hashtable emails = new Hashtable();
-            int indx = 0;
-
+            String emails = null;
             while (node != null)
             {
-                emails.Add(indx, node.data.sendFormat());
-                indx++;
+                emails += node.data.sendFormat();
                 node = node.next;
             }
             return emails;
