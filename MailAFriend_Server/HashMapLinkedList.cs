@@ -19,7 +19,7 @@ namespace MailAFriend_Server
         {
             LinkedList emailList = new LinkedList();
             String[] mailData;
-            data = data.Remove(data.Length - 5);
+            data = data.Remove(data.Length - 11);
             mailData = data.Split('|');
             Mail mail = new Mail(mailData[2], mailData[3], mailData[4], mailData[5]);
 
@@ -46,7 +46,7 @@ namespace MailAFriend_Server
             LinkedList tempList = new LinkedList();
             String[] userPass;
             
-            data = data.Remove(data.Length - 5);
+            data = data.Remove(data.Length - 11);
             userPass = data.Split('|');
             user = userPass[0];
 

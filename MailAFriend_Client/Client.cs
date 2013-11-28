@@ -28,16 +28,17 @@ namespace MailAFriend_Client
         public String username;
         public String password;
         public String message;
-        public String newEmail;
+        //public String newEmail;
         public String messageEnd = "<EOF>";
         public static int indx = 0;
         public static String response;
         public static Hashtable newEmails = new Hashtable();
+        public static object[] emailList;
         private volatile bool stopClientConnection = false;
 
         public Thread clientThread;
         
-        public delegate void clientThreadHandler(string message, Hashtable emails);
+        public delegate void clientThreadHandler(string message, Hashtable emails, object[] newEmailList);
         
         public event clientThreadHandler clientThreadComplete;
         
@@ -66,11 +67,6 @@ namespace MailAFriend_Client
                 IPAddress ipAddress = ipHostInfo.AddressList[0];
                 IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
 
-                while (!stopClientConnection)
-                {
-                    connectDone.Reset();
-                    sendDone.Reset();
-                    receiveDone.Reset();
                     // Create a TCP/IP socket.
                     Socket client = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                     // Connect to the remote endpoint.
@@ -85,28 +81,20 @@ namespace MailAFriend_Client
                     // Receive the response from the remote device.
                     Receive(client);
                     receiveDone.WaitOne();
-                }
-                clientThreadComplete(response, newEmails);
+
+                    if (stopClientConnection)
+                    {
+                        client.Shutdown(SocketShutdown.Both);
+                        client.Close();
+                    }
+                
+                    clientThreadComplete(response, newEmails, emailList);
+                    
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.ToString());
             }
-        }
-
-        public static void stopClient(Socket client)
-        {
-            try
-            {
-                // Release the socket.
-                client.Shutdown(SocketShutdown.Both);
-                client.Close();
-            }
-            catch (Exception ex) 
-            { 
-                MessageBox.Show(ex.ToString());
-            }
-        
         }
 
         private static void ConnectCallback(IAsyncResult ar)
@@ -198,15 +186,27 @@ namespace MailAFriend_Client
                     else if (response.IndexOf("<RETR>") > -1)
                     {
                         int newEmailID =0;
+                        newEmails.Clear();
                         String[] mailData;
                         String[] stringSeperator1 = new String[] {"~"};
                         response = response.Remove(response.Length - 11);
                         mailData = response.Split(stringSeperator1,StringSplitOptions.RemoveEmptyEntries);
                         foreach (String mail in mailData)
                         {
-                            newEmails.Add(newEmailID,mail);
+                            newEmails.Add(newEmailID, mail);
                             newEmailID++;
                         }
+                        newEmailID =0;
+                        emailList = new Object[newEmails.Count];
+                        foreach (String mail in mailData)
+                        {
+                            emailList[newEmailID] = newEmailID;
+                            newEmailID++;
+                        }
+                    }
+                    else if (response.IndexOf("Invalid user") > -1)
+                    {
+                        response = response.Remove(response.Length - 5);
                     }
                 }
             }
